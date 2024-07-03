@@ -1,0 +1,8 @@
+flask
+sentence-transformers
+torch
+langdetect
+pickle
+requests
+flask_cors
+huggingface_hub
