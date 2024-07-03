@@ -5,11 +5,10 @@ import pickle
 from langdetect import detect
 from flask import Flask, request, jsonify
 import requests
-from huggingface_hub import login
+from huggingface_hub import login , hf_hub_download
 
 
 app = Flask(__name__)
-CORS(app, resources={r"/chatbot": {"origins": "*"}})
 
 
 
@@ -28,18 +27,30 @@ login(token=HF_TOKEN)
 # Load the model with authentication
 model = SentenceTransformer("cha56/model", token=HF_TOKEN)
 
-# Load embeddings, questions, and answers
-with open('model/embeddings.pkl', 'rb') as f:
-    embeddings = pickle.load(f, encoding='latin1')
+# Download pickle files from Hugging Face repo
+def download_file(repo_id, filename, token):
+    return hf_hub_download(repo_id=repo_id, filename=filename, use_auth_token=token)
 
-with open('model/questions.pkl', 'rb') as f:
-    questions = pickle.load(f, encoding='latin1')
+# Define your repository ID
+repo_id = "cha56/model"
 
-with open('model/answers.pkl', 'rb') as f:
-    answers = pickle.load(f, encoding='latin1')
+# List of files to download
+files = ["embeddings.pkl", "questions.pkl", "answers.pkl", "languages.pkl"]
 
-with open('model/languages.pkl', 'rb') as f:
-    languages = pickle.load(f, encoding='latin1')
+# Download and load pickle files
+embeddings = questions = answers = languages = None
+
+for file in files:
+    local_file_path = download_file(repo_id, file, HF_TOKEN)
+    with open(local_file_path, 'rb') as f:
+        if file == "embeddings.pkl":
+            embeddings = pickle.load(f, encoding='latin1')
+        elif file == "questions.pkl":
+            questions = pickle.load(f, encoding='latin1')
+        elif file == "answers.pkl":
+            answers = pickle.load(f, encoding='latin1')
+        elif file == "languages.pkl":
+            languages = pickle.load(f, encoding='latin1')
 
 # Function to get embeddings for a list of questions
 def get_embeddings(model, questions):
